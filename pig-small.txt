@@ -1,0 +1,15 @@
+ad = LOAD 's3://bigrams-small/*' AS (bigram:chararray, year:int, count:int, books:int);
+
+gb = GROUP ad BY bigram;
+
+agb = FOREACH gb GENERATE group AS bigram, (double)SUM(ad.count)/(double)SUM(ad.books) AS bavg;
+
+oagb = ORDER agb BY bavg DESC, bigram;
+
+toagb = LIMIT oagb 10;
+
+STORE toagb INTO 's3://cse6242-ajaydsouza/task3/output/topbigrams.txt';
+
+rtoagb = FOREACH toagb GENERATE CONCAT(bigram,CONCAT('\t',(chararray)bavg));
+
+STORE rtoagb INTO 's3://cse6242-ajaydsouza/task3/output/output-small.txt' USING PigStorage('\t');
